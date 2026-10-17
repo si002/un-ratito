@@ -1,0 +1,53 @@
+name: Comprobar acceso a HealthKit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'PruebaSalud-iOS.zip'
+      - '.github/workflows/health-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar proyecto
+        run: |
+          unzip -q PruebaSalud-iOS.zip -d native
+          xcodebuild -version
+          xcodebuild -list -project native/PruebaSalud-iOS/UnRatito.xcodeproj
+      - name: Compilar para iPhone sin firma
+        run: |
+          set -o pipefail
+          xcodebuild -project native/PruebaSalud-iOS/UnRatito.xcodeproj -scheme UnRatito -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build.log
+      - name: Crear IPA para Sideloadly
+        run: |
+          mkdir -p package/Payload deliverables
+          ditto build/Build/Products/Release-iphoneos/UnRatito.app package/Payload/UnRatito.app
+          cd package
+          ditto -c -k --keepParent Payload ../deliverables/PruebaSalud-sin-firmar.ipa
+          cd ..
+          shasum -a 256 deliverables/PruebaSalud-sin-firmar.ipa > deliverables/SHA256.txt
+          echo 'IPA sin firmar: requiere Sideloadly y tu cuenta de Apple antes de instalarse en un iPhone.' > deliverables/LEEME.txt
+      - name: Guardar IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: PruebaSalud-IPA
+          path: deliverables/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Guardar registros
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Registros-Xcode
+          path: |
+            build.log
+            tests.log
+            TestResults.xcresult
+          retention-days: 7
