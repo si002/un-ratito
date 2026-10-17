@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#244c40">
+  <meta name="description" content="Un pequeño espacio para tus tareas, a tu ritmo. Sin cuentas y con uso sin conexión.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Un ratito">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+  <title>Un ratito · Tu espacio personal</title>
+</head>
+<body>
+  <main>
+    <header><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">✓</span> un ratito<span class="brand-dot">.</span></a><span id="connection" class="status">Comprobando conexión</span></header>
+    <section class="intro" aria-labelledby="title"><p class="eyebrow" id="date">TU ESPACIO PERSONAL</p><h1 id="title">Poco a poco,<br><em>también cuenta.</em></h1><p class="subtitle">Saca de tu cabeza lo que tienes pendiente.<br>Una cosa cada vez, a tu ritmo.</p><span class="sun" aria-hidden="true">✳</span></section>
+    <section class="board" aria-labelledby="board-title">
+      <div class="board-heading"><div><p class="eyebrow">HAZ HUECO PARA LO IMPORTANTE</p><h2 id="board-title">Mis pequeñas tareas</h2></div><span id="count" class="count">0 pendientes</span></div>
+      <form id="add-form"><label class="sr-only" for="task-input">Nueva tarea</label><input id="task-input" name="task" placeholder="¿Qué te gustaría hacer?" maxlength="180" required autocomplete="off"><button class="add" type="submit"><span aria-hidden="true">＋</span><span>Añadir</span></button></form>
+      <div class="list-toolbar"><div class="filters" role="group" aria-label="Filtrar tareas"><button type="button" data-filter="all" aria-pressed="true">Todas</button><button type="button" data-filter="active" aria-pressed="false">Pendientes</button><button type="button" data-filter="done" aria-pressed="false">Hechas</button></div><span id="progress-label" class="progress-label">Tu próximo paso empieza aquí</span></div>
+      <div class="progress-track" role="progressbar" aria-label="Tareas completadas" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progress"></div></div>
+      <ul id="tasks" aria-label="Lista de tareas"></ul>
+      <div id="empty" class="empty"><span aria-hidden="true">☘</span><h3>Un poquito de espacio mental.</h3><p>Añade tu primera tarea. Puede ser algo pequeño.</p></div>
+      <div class="board-footer"><span>Solo en este dispositivo</span><button type="button" id="clear" hidden>Borrar hechas</button></div>
+    </section>
+    <aside class="little-note"><span aria-hidden="true">✦</span><p>No tienes que hacerlo todo hoy.<br><strong>Con un pequeño paso basta.</strong></p></aside>
+    <details class="help"><summary>Tu app, siempre a mano <span aria-hidden="true">↗</span></summary><div><p>En tu iPhone, abre esta página con Safari, pulsa <strong>Compartir → Añadir a pantalla de inicio</strong> y activa «Abrir como app web» si aparece.</p><p id="offline-status" role="status">Preparando el uso sin conexión…</p><p>Las tareas se guardan en este navegador, sin enviarse a un servidor. No se sincronizan entre Windows y el iPhone. Borrar los datos del sitio puede eliminarlas; guarda una copia si la necesitas.</p><div class="backup-actions"><button id="export" type="button">Guardar copia</button><label class="import-label" for="import">Importar copia</label><input id="import" type="file" accept="application/json,.json" class="sr-only"></div></div></details>
+    <footer>UN RATITO PARA TI <span aria-hidden="true">·</span> sin prisas, sin cuentas.</footer>
+  </main>
+  <p id="message" class="toast" role="status" aria-live="polite" hidden></p>
+</body>
+</html>
