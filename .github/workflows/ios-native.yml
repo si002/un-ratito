@@ -1,0 +1,58 @@
+name: Compilar app nativa iOS
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'UnRatito-iOS.zip'
+      - '.github/workflows/ios-native.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar proyecto
+        run: |
+          unzip -q UnRatito-iOS.zip -d native
+          xcodebuild -version
+          xcodebuild -list -project native/UnRatito-iOS/UnRatito.xcodeproj
+      - name: Compilar para iPhone sin firma
+        run: |
+          set -o pipefail
+          xcodebuild -project native/UnRatito-iOS/UnRatito.xcodeproj -scheme UnRatito -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build 2>&1 | tee build.log
+      - name: Crear IPA para Sideloadly
+        run: |
+          mkdir -p package/Payload deliverables
+          ditto build/Build/Products/Release-iphoneos/UnRatito.app package/Payload/UnRatito.app
+          cd package
+          ditto -c -k --keepParent Payload ../deliverables/UnRatito-sin-firmar.ipa
+          cd ..
+          shasum -a 256 deliverables/UnRatito-sin-firmar.ipa > deliverables/SHA256.txt
+          echo 'IPA sin firmar: requiere Sideloadly y tu cuenta de Apple antes de instalarse en un iPhone.' > deliverables/LEEME.txt
+      - name: Guardar IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: UnRatito-IPA-para-Sideloadly
+          path: deliverables/
+          retention-days: 30
+          if-no-files-found: error
+      - name: Ejecutar pruebas en simulador
+        run: |
+          set -o pipefail
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; data=json.load(sys.stdin); print(next(d["udid"] for runtime,devices in data["devices"].items() if "iOS" in runtime for d in devices if "iPhone" in d["name"]))')
+          xcodebuild -project native/UnRatito-iOS/UnRatito.xcodeproj -scheme UnRatito -configuration Debug -destination "platform=iOS Simulator,id=$DEVICE_ID" -derivedDataPath test-build -resultBundlePath TestResults.xcresult CODE_SIGNING_ALLOWED=NO test 2>&1 | tee tests.log
+      - name: Guardar registros
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Registros-Xcode
+          path: |
+            build.log
+            tests.log
+            TestResults.xcresult
+          retention-days: 7
