@@ -1,0 +1,57 @@
+name: Preparar firmador HealthKit para Windows
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'healthkit-signer-source.zip'
+      - '.github/workflows/healthkit-signer-build.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Preparar parche limitado a Prueba Salud
+        shell: pwsh
+        run: |
+          Expand-Archive healthkit-signer-source.zip -DestinationPath patch
+          python patch/prepare.py
+          $app = Get-Content signer-app-path.txt
+          "SIGNER_APP=$app" >> $env:GITHUB_ENV
+      - name: Instalar dependencias
+        shell: pwsh
+        run: |
+          Set-Location $env:SIGNER_APP
+          bun install --frozen-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Compilar iLoader para Windows
+        shell: pwsh
+        run: |
+          Set-Location $env:SIGNER_APP
+          bun run tauri build --no-bundle
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verificar alcance y validacion del perfil
+        shell: pwsh
+        run: |
+          Set-Location "$env:SIGNER_APP/src-tauri"
+          cargo test -p isideload --lib healthkit_probe_tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Preparar entrega
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory deliverables
+          Copy-Item "$env:SIGNER_APP/src-tauri/target/release/iloader.exe" deliverables/iloader-healthkit.exe
+          Copy-Item patch/LEEME.md deliverables/LEEME.md
+          Copy-Item "$env:SIGNER_APP/LICENSE" deliverables/LICENSE-iloader
+          Invoke-WebRequest https://raw.githubusercontent.com/nab138/isideload/main/LICENSE -OutFile deliverables/LICENSE-isideload
+          (Get-FileHash deliverables/iloader-healthkit.exe -Algorithm SHA256).Hash | Set-Content deliverables/SHA256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iLoader-HealthKit-prueba-Windows
+          path: deliverables/
+          if-no-files-found: error
+          retention-days: 14
