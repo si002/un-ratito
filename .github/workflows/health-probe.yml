@@ -48,6 +48,10 @@ jobs:
           xcrun simctl launch "$SIM_ID" com.si002.pruebasalud --preview-data --preview-connection
           sleep 2
           xcrun simctl io "$SIM_ID" screenshot deliverables/Pulso-conexion-demo.png
+          xcrun simctl terminate "$SIM_ID" com.si002.pruebasalud
+          xcrun simctl launch "$SIM_ID" com.si002.pruebasalud --preview-data --preview-sleep
+          sleep 3
+          xcrun simctl io "$SIM_ID" screenshot deliverables/Pulso-sueno-demo.png
       - name: Crear IPA para iLoader HealthKit
         run: |
           mkdir -p package/Payload
@@ -73,3 +77,4 @@ jobs:
             tests.log
             TestResults.xcresult
           retention-days: 7
+
