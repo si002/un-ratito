@@ -5,6 +5,9 @@ on:
     paths:
       - 'PruebaSalud-iOS.zip'
       - '.github/workflows/health-probe.yml'
+concurrency:
+  group: pulso-${{ github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -52,6 +55,18 @@ jobs:
           xcrun simctl launch "$SIM_ID" com.si002.pruebasalud --preview-data --preview-sleep
           sleep 3
           xcrun simctl io "$SIM_ID" screenshot deliverables/Pulso-sueno-demo.png
+          xcrun simctl terminate "$SIM_ID" com.si002.pruebasalud
+          xcrun simctl launch "$SIM_ID" com.si002.pruebasalud --preview-data --preview-morning
+          sleep 3
+          xcrun simctl io "$SIM_ID" screenshot deliverables/Pulso-manana-demo.png
+          xcrun simctl terminate "$SIM_ID" com.si002.pruebasalud
+          xcrun simctl launch "$SIM_ID" com.si002.pruebasalud --preview-data --preview-evening
+          sleep 3
+          xcrun simctl io "$SIM_ID" screenshot deliverables/Pulso-noche-demo.png
+          xcrun simctl terminate "$SIM_ID" com.si002.pruebasalud
+          xcrun simctl launch "$SIM_ID" com.si002.pruebasalud --preview-data --preview-plan
+          sleep 3
+          xcrun simctl io "$SIM_ID" screenshot deliverables/Pulso-plan-demo.png
       - name: Crear IPA para iLoader HealthKit
         run: |
           mkdir -p package/Payload
@@ -77,4 +92,6 @@ jobs:
             tests.log
             TestResults.xcresult
           retention-days: 7
+
+
 
